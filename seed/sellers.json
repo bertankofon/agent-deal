@@ -1,0 +1,50 @@
+{
+  "seededAt": "manual",
+  "sellers": [
+    {
+      "id": "quickcart",
+      "name": "QuickCart",
+      "persona": "fast",
+      "repScore": 4.3,
+      "repDeals": 58,
+      "stellarAgentId": 3,
+      "wallet": "GDQC7XMOMBKUHS4FTYDD366SCKYKTM6MO3ETFKF5DCYPJOSIRE7645WG"
+    },
+    {
+      "id": "fairtrade",
+      "name": "FairTrade Co",
+      "persona": "balanced",
+      "repScore": 4.5,
+      "repDeals": 81,
+      "stellarAgentId": 4,
+      "wallet": "GA5YCY5YDG7A2GAHOHDLYSLXRT5FLZNWMPFJS3IOIVVT7QZBVLZPQKU2"
+    },
+    {
+      "id": "budgetbin",
+      "name": "BudgetBin",
+      "persona": "fast",
+      "repScore": 3.6,
+      "repDeals": 33,
+      "stellarAgentId": 5,
+      "wallet": "GADSHZM7RHNTHJZPUQUECRMU5NDH4EW7PCJFYGYL4FCVXOBFZWOGOOLF"
+    },
+    {
+      "id": "meridian",
+      "name": "Meridian Goods",
+      "persona": "balanced",
+      "repScore": 4.1,
+      "repDeals": 47,
+      "stellarAgentId": 6,
+      "wallet": "GALTHGVLICMGT6AIZWA5APD3JSHOCNROXGJJUR7ISOAHDKXTAOQFAMDQ"
+    },
+    {
+      "id": "drift",
+      "name": "Drift Trading",
+      "persona": "revenue",
+      "repScore": 2.2,
+      "repDeals": 4,
+      "stellarAgentId": 7,
+      "wallet": "GCBRGLFIYPRH7WNZUWDDKQ4KNYOZPKQ4F6DTIL2QCRAIBKTOSFFN5EEG"
+    }
+  ]
+}

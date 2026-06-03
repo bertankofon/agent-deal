@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentic Commerce on Stellar — Agent Deal</title>
+    <link rel="icon" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg:#f3f6fc; --panel:#ffffff; --ink:#16213a; --muted:#6b7488; --faint:#9aa3b5;
+        --line:#e7ecf6; --line-2:#dde4f1; --brand:#3f6df6; --brand-2:#5b86ff; --brand-soft:#eaf0ff;
+        --user:#e8f0ff; --user-ink:#1f4bd8; --ok:#13a05f; --gold:#f5a623; --orange:#f0883c;
+        --shadow:0 1px 3px rgba(20,33,58,.07), 0 12px 30px rgba(20,33,58,.05);
+      }
+      * { box-sizing:border-box; }
+      html,body { height:100%; }
+      body { margin:0; font-family:"Inter",system-ui,sans-serif; color:var(--ink); background:var(--bg);
+        -webkit-font-smoothing:antialiased; }
+      .mono { font-family:"JetBrains Mono",ui-monospace,monospace; }
+
+      header { max-width:780px; margin:0 auto; padding:18px 18px 8px; display:flex; align-items:center; justify-content:space-between; }
+      .brand { display:flex; align-items:center; gap:9px; font-weight:800; font-size:16px; letter-spacing:-.01em; }
+      .mark { width:28px; height:28px; border-radius:9px; overflow:hidden; background:#fff; display:grid; place-items:center;
+        box-shadow:0 4px 12px rgba(63,109,246,.3); }
+      .mark img { width:100%; transform:scale(1.85); }
+      .logo-tile { width:62px; height:62px; border-radius:18px; margin:0 auto; background:#fff; box-shadow:var(--shadow); overflow:hidden; display:grid; place-items:center; }
+      .logo-tile img { width:100%; transform:scale(1.85); }
+      .stellar-lock { display:inline-flex; align-items:center; gap:10px; color:#0b0d12; white-space:nowrap; vertical-align:baseline; }
+      .stellar-lock .slogo { height:0.78em; width:auto; }
+      .tagline { font-style:italic; color:var(--muted); font-size:15.5px; margin:0; }
+      .hnav { display:flex; align-items:center; gap:10px; }
+      .hnav a { font-size:13px; color:var(--muted); text-decoration:none; }
+      .wbtn { font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border-radius:999px; border:1px solid var(--line-2);
+        background:#fff; color:var(--ink); padding:7px 14px; display:flex; align-items:center; gap:7px; box-shadow:var(--shadow); }
+      .wbtn:hover { border-color:var(--brand); } .wbtn .d{ width:7px;height:7px;border-radius:50%;background:var(--faint);} .wbtn.on .d{ background:var(--ok); }
+
+      .chatwrap { max-width:780px; margin:0 auto; padding:8px 18px 0; }
+      .intro { text-align:center; padding:26px 0 14px; }
+      .intro h1 { font-size:26px; font-weight:800; letter-spacing:-.02em; margin:10px 0 6px; }
+      .intro p { color:var(--muted); font-size:14.5px; margin:0; }
+
+      .chat { display:flex; flex-direction:column; gap:14px; padding:14px 0 140px; }
+      .msg { display:flex; gap:10px; max-width:100%; animation:rise .26s ease; }
+      @keyframes rise { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+      .msg.user { flex-direction:row-reverse; }
+      .ava { width:30px; height:30px; border-radius:9px; flex:none; display:grid; place-items:center; font-size:13px; font-weight:700; color:#fff; }
+      .ava.bot { background:linear-gradient(135deg,var(--brand),var(--brand-2)); }
+      .ava.you { background:#cdd8ee; color:#42506e; }
+      .bub { padding:11px 14px; border-radius:16px; font-size:14.5px; line-height:1.55; max-width:78%; }
+      .msg.bot .bub { background:#fff; border:1px solid var(--line); border-bottom-left-radius:6px; box-shadow:var(--shadow); }
+      .msg.user .bub { background:var(--user); color:var(--user-ink); border-bottom-right-radius:6px; }
+      .botname { font-size:11px; font-weight:700; color:var(--brand); margin:0 0 5px 40px; }
+
+      .typing { display:inline-flex; gap:5px; padding:3px 2px; }
+      .typing span { width:7px; height:7px; border-radius:50%; background:var(--faint); animation:blink 1.2s infinite; }
+      .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+      @keyframes blink { 0%,60%,100%{opacity:.25} 30%{opacity:1} }
+
+      /* product + deal cards live in a full-width block under a bot message */
+      .cardblock { margin:2px 0 0 40px; }
+      .scroller { display:flex; gap:12px; overflow-x:auto; padding:6px 2px 10px; scrollbar-width:thin; }
+      .pcard { flex:0 0 168px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:12px; box-shadow:var(--shadow); }
+      .pimg { height:96px; border-radius:12px; background:linear-gradient(160deg,#f3f6fd,#e9eef9); display:grid; place-items:center; font-size:42px; margin-bottom:11px; }
+      .pname { font-weight:700; font-size:13.5px; line-height:1.25; }
+      .pmeta { font-size:12px; color:var(--muted); margin-top:2px; }
+      .pprice { font-weight:700; font-size:14px; margin-top:7px; }
+      .pbtn { width:100%; margin-top:10px; border:0; border-radius:10px; padding:9px; font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer;
+        background:var(--brand-soft); color:var(--brand); transition:background .12s; }
+      .pbtn:hover { background:#dde8ff; }
+
+      .deals { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+      .dcard { background:#fff; border:1px solid var(--line); border-radius:16px; padding:13px 15px; box-shadow:var(--shadow); display:flex; align-items:center; gap:14px; }
+      .dcard.best { border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft), var(--shadow); }
+      .dleft { flex:1; min-width:0; }
+      .dtags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+      .tag { font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:999px; }
+      .tag.cheap { background:#e6f7ee; color:#13a05f; } .tag.trust { background:#eaf0ff; color:var(--brand); }
+      .tag.value { background:#fff2dd; color:#c9781b; } .tag.fast { background:#f3eaff; color:#7c4dd6; }
+      .dseller { font-weight:700; font-size:14px; } .dseller .st{ color:var(--gold); font-size:12px; font-weight:600; margin-left:5px; }
+      .dwallet { font-size:11px; color:var(--faint); margin-top:1px; }
+      .dprice { text-align:right; white-space:nowrap; } .dprice s{ color:var(--faint); font-size:12px; } .dprice b{ display:block; font-size:17px; }
+      .dbtn { border:0; border-radius:10px; padding:9px 15px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; color:#fff;
+        background:linear-gradient(135deg,var(--brand),var(--brand-2)); white-space:nowrap; }
+      .dbtn:disabled { opacity:.55; cursor:not-allowed; }
+      .dbtn.ghost { background:#f1f4fb; color:var(--ink); }
+
+      .statusrow { font-size:13px; color:var(--muted); padding:3px 0; display:flex; gap:8px; }
+      .statusrow .ok{ color:var(--ok); font-weight:600; } .statusrow .no{ color:#c0392b; }
+
+      .receipt { margin-top:6px; font-size:13px; }
+      .receipt .ln { display:flex; gap:10px; padding:4px 0; border-bottom:1px solid var(--line); } .receipt .ln:last-child{border:0}
+      .receipt .k { color:var(--muted); width:108px; flex:none; } .receipt .v{ word-break:break-all; } .receipt a{ color:var(--brand); }
+      .ok-c { color:var(--ok); font-weight:600; }
+
+      /* visible per-seller negotiation */
+      .nego { margin:2px 0 6px 40px; border-left:2px solid var(--brand-soft); padding:6px 0 6px 13px; display:flex; flex-direction:column; gap:7px; }
+      .nhead { font-size:12px; color:var(--muted); font-weight:700; margin-bottom:2px; }
+      .nbub { max-width:82%; font-size:13px; padding:7px 11px; border-radius:13px; line-height:1.45; }
+      .nbub.buyer { align-self:flex-start; background:#eef3ff; color:#26407c; border-bottom-left-radius:4px; }
+      .nbub.seller { align-self:flex-end; background:#fff5e9; color:#8a5a1c; border-bottom-right-radius:4px; }
+      .nbub.accept { box-shadow:0 0 0 2px rgba(19,160,95,.3); } .nbub.reject { box-shadow:0 0 0 2px rgba(192,57,43,.25); }
+      .nbub .pp { display:inline-flex; align-items:center; gap:6px; margin-top:9px; font-size:18px; font-weight:800;
+        padding:5px 13px; border-radius:11px; letter-spacing:.4px; line-height:1; box-shadow:0 2px 8px rgba(20,33,58,.1); border:1px solid transparent; }
+      .nbub .pp::before { content:"offer"; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; opacity:.7; }
+      .nbub.buyer .pp { background:#d3e2ff; color:#163fc4; border-color:#b9d0ff; }
+      .nbub.seller .pp { background:#ffe0b3; color:#8a4c0c; border-color:#f6cf97; }
+      .nbub.accept .pp::before { content:"deal"; } .nbub.reject .pp::before { content:"final"; }
+      .nbub.t { background:#f0f3fa; }
+
+      /* interactive rating widget */
+      .rate { margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+      .rate .lbl2 { font-size:12.5px; color:var(--muted); margin-bottom:6px; }
+      .stars-pick { font-size:22px; cursor:pointer; user-select:none; letter-spacing:3px; }
+      .stars-pick .s { color:#d7deec; transition:color .1s; } .stars-pick .s.on { color:var(--gold); }
+      .rate .go { margin-top:9px; border:0; border-radius:10px; padding:8px 15px; font-family:inherit; font-size:13px; font-weight:700;
+        cursor:pointer; color:#fff; background:linear-gradient(135deg,var(--brand),var(--brand-2)); }
+      .rate .go:disabled { opacity:.55; cursor:not-allowed; }
+
+      .composer { position:fixed; left:0; right:0; bottom:0; background:linear-gradient(0deg,var(--bg) 70%,transparent); padding:14px 18px 20px; }
+      .composer .inner { max-width:780px; margin:0 auto; display:flex; gap:10px; align-items:center; background:#fff; border:1px solid var(--line-2);
+        border-radius:16px; padding:7px 7px 7px 16px; box-shadow:var(--shadow); }
+      .composer input { flex:1; border:0; outline:0; font-family:inherit; font-size:15px; color:var(--ink); background:transparent; }
+      .composer button { border:0; width:40px; height:40px; border-radius:12px; cursor:pointer; color:#fff; font-size:17px;
+        background:linear-gradient(135deg,var(--brand),var(--brand-2)); }
+      .chips { max-width:780px; margin:8px auto 0; display:flex; gap:8px; flex-wrap:wrap; }
+      .chip { font-size:12.5px; border:1px solid var(--line-2); background:#fff; color:var(--muted); border-radius:999px; padding:6px 12px; cursor:pointer; }
+      .chip:hover { border-color:var(--brand); color:var(--brand); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand"><span class="mark"><img src="/logo.png" alt="" /></span> Agent Deal</div>
+      <div class="hnav">
+        <a href="/explorer.html">Explorer</a>
+        <button class="wbtn" id="walletBtn"><span class="d"></span><span id="walletLabel">Connect wallet</span></button>
+      </div>
+    </header>
+
+    <div class="chatwrap">
+      <div class="intro">
+        <div class="logo-tile"><img src="/logo.png" alt="Agent Deal" /></div>
+        <h1>Agentic Commerce on <span class="stellar-lock"><img src="/stellar.svg" class="slogo" alt="" />Stellar</span></h1>
+        <p class="tagline">“Economies evolve when humans step aside.”</p>
+      </div>
+      <div class="chat" id="chat"></div>
+    </div>
+
+    <div class="composer">
+      <div class="chips" id="chips"></div>
+      <div class="inner">
+        <input id="input" placeholder="Ask me anything… e.g. what can I buy?" autocomplete="off" />
+        <button id="send">↑</button>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const NET = "Test SDF Network ; September 2015";
+      const fmt = (n) => (n < 1 ? "$" + n.toFixed(3) : "$" + n.toFixed(2));
+      const short = (a) => (a ? a.slice(0,4)+"…"+a.slice(-4) : "—");
+      const stars = (s) => "★".repeat(Math.round(s));
+      const chat = $("chat");
+      let history = [];
+      let wallet = null;
+
+      // ---------- Freighter ----------
+      let FR = null;
+      async function loadFR() {
+        if (FR) return FR;
+        const m = await import("https://esm.sh/@stellar/freighter-api@4.1.0");
+        FR = (m && typeof m.isConnected === "function") ? m : (m.default && m.default.isConnected ? m.default : m.default || m);
+        return FR;
+      }
+      async function connectWallet() {
+        let api; try { api = await loadFR(); } catch (e) { alert("Could not load Freighter library: " + e); return null; }
+        try {
+          const conn = await api.isConnected();
+          if (conn && conn.isConnected === false) { alert("Freighter not detected. Enable the extension and reload."); return null; }
+          const acc = await api.requestAccess();
+          if (acc && acc.error) throw new Error(acc.error);
+          let addr = (acc && acc.address) || ""; if (!addr) { const g = await api.getAddress(); addr = g.address || g; }
+          wallet = typeof addr === "string" ? addr : addr.address;
+          $("walletBtn").classList.add("on"); $("walletLabel").textContent = short(wallet);
+          return wallet;
+        } catch (e) { alert("Wallet connect failed: " + (e.message || e)); return null; }
+      }
+      $("walletBtn").addEventListener("click", connectWallet);
+
+      // ---------- message helpers ----------
+      function botMsg(html, withName) {
+        const wrap = document.createElement("div");
+        if (withName) { const n = document.createElement("div"); n.className="botname"; n.textContent="Agent Deal"; wrap.appendChild(n); }
+        const m = document.createElement("div"); m.className = "msg bot";
+        m.innerHTML = `<div class="ava bot">◆</div><div class="bub">${html}</div>`;
+        wrap.appendChild(m); chat.appendChild(wrap); scroll(); return m;
+      }
+      function userMsg(text) {
+        const m = document.createElement("div"); m.className = "msg user";
+        m.innerHTML = `<div class="ava you">Y</div><div class="bub">${esc(text)}</div>`;
+        chat.appendChild(m); scroll();
+      }
+      function block(node) { const b = document.createElement("div"); b.className="cardblock"; b.appendChild(node); chat.appendChild(b); scroll(); return b; }
+      function typing() {
+        const m = document.createElement("div"); m.className="msg bot";
+        m.innerHTML = `<div class="ava bot">◆</div><div class="bub"><div class="typing"><span></span><span></span><span></span></div></div>`;
+        chat.appendChild(m); scroll(); return m;
+      }
+      const scroll = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+
+      // ---------- catalog cards ----------
+      function productCards(items) {
+        const row = document.createElement("div"); row.className = "scroller";
+        for (const p of items) {
+          const c = document.createElement("div"); c.className = "pcard";
+          c.innerHTML = `<div class="pimg">${p.image || "📦"}</div>
+            <div class="pname">${p.sku}</div><div class="pmeta">${p.sellers} sellers</div>
+            <div class="pprice">from ${fmt(p.from)}</div>
+            <button class="pbtn">Find best deal</button>`;
+          c.querySelector(".pbtn").addEventListener("click", () => startShop(p.sku));
+          row.appendChild(c);
+        }
+        return row;
+      }
+
+      // ---------- chat send ----------
+      async function send(text) {
+        if (!text.trim()) return;
+        userMsg(text); history.push({ role: "user", content: text });
+        const t = typing();
+        try {
+          const r = await (await fetch("/api/chat", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ message: text, history })})).json();
+          t.remove();
+          botMsg(esc(r.reply), true); history.push({ role: "assistant", content: r.reply });
+          if (r.products && r.products.length) block(productCards(r.products));
+          if (r.action === "product" && r.sku) setTimeout(() => startShop(r.sku), 400);
+        } catch (e) { t.remove(); botMsg("Sorry, something went wrong: " + e); }
+      }
+      $("send").addEventListener("click", () => { const v = $("input").value; $("input").value=""; send(v); });
+      $("input").addEventListener("keydown", (e) => { if (e.key === "Enter") { const v = $("input").value; $("input").value=""; send(v); } });
+
+      // ---------- visible negotiation playback ----------
+      async function playMini(o) {
+        const wrap = document.createElement("div"); wrap.className = "nego";
+        const h = document.createElement("div"); h.className = "nhead";
+        h.textContent = `Negotiating with ${o.seller.name}  ·  ★${o.sellerRep.toFixed(1)}`;
+        wrap.appendChild(h); chat.appendChild(wrap); scroll();
+        for (let i = 0; i < o.session.transcript.length; i++) {
+          const m = o.session.transcript[i];
+          const t = document.createElement("div"); t.className = `nbub ${m.sender} t`;
+          t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+          wrap.appendChild(t); scroll(); await sleep(620); t.remove();
+          const b = document.createElement("div");
+          b.className = `nbub ${m.sender}` + (m.accept ? " accept" : m.reject ? " reject" : "");
+          b.innerHTML = `${esc(m.message)}<div class="pp mono">${fmt(m.proposedPrice)}</div>`;
+          wrap.appendChild(b); scroll(); await sleep(380);
+        }
+      }
+
+      // ---------- generic 8004 write: build → Freighter sign → submit ----------
+      async function sign8004(urlFn) {
+        if (!wallet) { const w = await connectWallet(); if (!w) throw new Error("Connect a wallet first."); }
+        const buildUrl = typeof urlFn === "function" ? urlFn() : urlFn;
+        const api = await loadFR();
+        const b = await (await fetch(buildUrl)).json();
+        if (b.error) throw new Error(b.error);
+        const signed = await api.signTransaction(b.xdr, { networkPassphrase: NET, address: wallet });
+        if (signed && signed.error) throw new Error(signed.error);
+        const signedXdr = typeof signed === "string" ? signed : signed.signedTxXdr;
+        const res = await (await fetch("/api/tx/submit", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ signedXdr })})).json();
+        if (res.error) throw new Error(res.error);
+        return res;
+      }
+
+      // ---------- shop = negotiate + tagged deals ----------
+      async function startShop(sku) {
+        userMsg(`Find me the best deal on ${sku}`);
+        const t = typing(); await sleep(500); t.remove();
+        botMsg(`On it — scanning sellers and negotiating for <b>${esc(sku)}</b>…`, true);
+        const statusWrap = document.createElement("div"); statusWrap.className = "cardblock";
+        chat.appendChild(statusWrap); scroll();
+        let r;
+        try {
+          r = await (await fetch("/api/shop", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ buyerAgentId:"atlas", sku })})).json();
+        } catch (e) { botMsg("Negotiation failed: " + e); return; }
+
+        for (const s of r.skipped) {
+          const row = document.createElement("div"); row.className="statusrow";
+          row.innerHTML = `<span class="no">✗ ${esc(s.name)}</span> skipped — reputation ${s.rep.toFixed(1)} below your agent's threshold`;
+          statusWrap.appendChild(row); await sleep(600); scroll();
+        }
+        // Play each seller's negotiation, visibly and unhurried.
+        for (const o of r.offers) {
+          await playMini(o);
+          const row = document.createElement("div"); row.className="statusrow";
+          row.innerHTML = o.agreed
+            ? `<span class="ok">✓ ${esc(o.seller.name)}</span> closed at <b class="mono">${fmt(o.finalPrice)}</b>`
+            : `<span class="no">✗ ${esc(o.seller.name)}</span> walked away`;
+          chat.appendChild(row); await sleep(500); scroll();
+        }
+
+        const agreed = r.offers.filter(o => o.agreed);
+        if (!agreed.length) { botMsg("No seller met the terms this time — try another item."); return; }
+
+        const cheapest = agreed.reduce((a,b)=> b.finalPrice<a.finalPrice?b:a);
+        const trusted = agreed.reduce((a,b)=> b.sellerRep>a.sellerRep?b:a);
+        const value = agreed.reduce((a,b)=> (b.finalPrice/b.listPrice-b.sellerRep/5*0.15)<(a.finalPrice/a.listPrice-a.sellerRep/5*0.15)?b:a);
+        agreed.forEach(o => { o.tags = []; if(o===cheapest)o.tags.push(["cheap","Cheapest"]); if(o===trusted)o.tags.push(["trust","Most trusted"]); if(o===value)o.tags.push(["value","Best value"]); });
+        agreed.sort((a,b)=> (a.finalPrice/a.listPrice-a.sellerRep/5*0.15)-(b.finalPrice/b.listPrice-b.sellerRep/5*0.15));
+
+        botMsg(`Here are your best options across ${agreed.length} sellers. Pick the one you like — I'll settle it from your wallet.`, true);
+        const wrap = document.createElement("div"); wrap.className="cardblock";
+        const deals = document.createElement("div"); deals.className="deals";
+        agreed.forEach((o,i) => deals.appendChild(dealCard(o, sku, i===0)));
+        wrap.appendChild(deals); chat.appendChild(wrap); scroll();
+      }
+
+      function dealCard(o, sku, best) {
+        const c = document.createElement("div"); c.className = "dcard" + (best?" best":"");
+        const pct = Math.round((o.listPrice-o.finalPrice)/o.listPrice*100);
+        const tagHtml = (o.tags||[]).map(([k,l])=>`<span class="tag ${k}">${l}</span>`).join("");
+        c.innerHTML = `<div class="dleft">
+            <div class="dtags">${tagHtml||""}</div>
+            <div class="dseller">${esc(o.seller.name)}<span class="st">${stars(o.sellerRep)} ${o.sellerRep.toFixed(1)}</span></div>
+            <div class="dwallet mono">${short(o.seller.wallet)} · agent #${o.seller.stellarAgentId??"–"}</div>
+          </div>
+          <div class="dprice"><s class="mono">${fmt(o.listPrice)}</s><b class="mono">${fmt(o.finalPrice)}</b><span style="font-size:11px;color:var(--ok)">−${pct}%</span></div>
+          <button class="dbtn">Choose &amp; pay</button>`;
+        c.querySelector(".dbtn").addEventListener("click", () => payDeal(o, sku, c));
+        return c;
+      }
+
+      // ---------- settle (wallet-only) ----------
+      async function payDeal(o, sku, cardEl) {
+        const btn = cardEl.querySelector(".dbtn");
+        if (!wallet) { const w = await connectWallet(); if (!w) return; }
+        btn.disabled = true; btn.textContent = "Signing…";
+        const sid = o.session.id;
+        try {
+          const api = await loadFR();
+          const b = await (await fetch(`/api/settle/${sid}/build?from=${wallet}`)).json();
+          if (b.error) throw new Error(b.error);
+          const signed = await api.signTransaction(b.xdr, { networkPassphrase: NET, address: wallet });
+          if (signed && signed.error) throw new Error(signed.error);
+          const signedXdr = typeof signed === "string" ? signed : signed.signedTxXdr;
+          btn.textContent = "Submitting…";
+          const res = await (await fetch(`/api/settle/${sid}/submit`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ signedXdr, from: wallet })})).json();
+          if (res.error) throw new Error(res.error);
+          const session = (await (await fetch(`/api/session/${sid}`)).json()).session;
+          btn.textContent = "✓ Paid";
+          receipt(o, sku, session);
+        } catch (e) {
+          btn.disabled = false; btn.textContent = "Choose & pay";
+          botMsg("Payment failed: " + (e.message || e));
+        }
+      }
+
+      function receipt(o, sku, session) {
+        const p = session.payment || {};
+        const tx = p.explorerUrl ? `<a href="${p.explorerUrl}" target="_blank" class="mono">view transaction ↗</a>` : `<span class="ok-c">confirmed</span>`;
+        const m = botMsg(`Done! Bought <b>${esc(sku)}</b> from <b>${esc(o.seller.name)}</b> for <b>${fmt(o.finalPrice)} USDC</b>.
+          <div class="receipt">
+            <div class="ln"><span class="k">From → To</span><span class="v mono">${short(p.from||wallet)} → ${short(p.to||o.seller.wallet)}</span></div>
+            <div class="ln"><span class="k">Transaction</span><span class="v">${tx}</span></div>
+          </div>
+          <div class="rate" id="rate-${o.seller.id}">
+            <div class="lbl2">How was ${esc(o.seller.name)}? Your rating is written to the 8004 Reputation Registry — signed by your wallet.</div>
+            <div class="stars-pick" id="sp-${o.seller.id}">${[1,2,3,4,5].map(n=>`<span class="s" data-n="${n}">★</span>`).join("")}</div>
+            <button class="go" disabled>Submit rating on-chain</button>
+          </div>`, true);
+        wireRating(m, o);
+      }
+
+      function wireRating(msgEl, o) {
+        const box = msgEl.querySelector(".rate"); if (!box) return;
+        const pick = box.querySelector(".stars-pick"); const go = box.querySelector(".go");
+        let chosen = 0;
+        const paint = (n) => [...pick.children].forEach((s,i)=> s.classList.toggle("on", i < n));
+        [...pick.children].forEach((s) => {
+          s.addEventListener("mouseenter", () => paint(+s.dataset.n));
+          s.addEventListener("click", () => { chosen = +s.dataset.n; paint(chosen); go.disabled = false; });
+        });
+        pick.addEventListener("mouseleave", () => paint(chosen));
+        go.addEventListener("click", async () => {
+          if (!chosen || !o.seller.stellarAgentId) return;
+          go.disabled = true; go.textContent = "Signing…";
+          try {
+            const res = await sign8004(() => `/api/feedback/${o.seller.stellarAgentId}/build?from=${wallet}&score=${chosen}`);
+            box.innerHTML = `<div class="lbl2 ok-c">★ ${chosen}/5 written to the Reputation Registry for agent #${o.seller.stellarAgentId} ✓ — <a href="${res.explorerUrl}" target="_blank">tx ↗</a></div>`;
+          } catch (e) { go.disabled = false; go.textContent = "Submit rating on-chain"; alert("Rating failed: " + (e.message||e)); }
+        });
+      }
+
+      // ---------- boot ----------
+      async function boot() {
+        const chips = ["What can I buy?","I need a USB-C cable","Show me a wireless mouse","Something cheap for the office"];
+        $("chips").innerHTML = chips.map(c=>`<span class="chip">${c}</span>`).join("");
+        [...document.querySelectorAll(".chip")].forEach(el => el.addEventListener("click", () => send(el.textContent)));
+        await sleep(300);
+        botMsg("Hey! I'm your autonomous shopping agent. Ask me what's available, or tell me what you need and I'll negotiate it across sellers for you.", true);
+      }
+      boot();
+    </script>
+  </body>
+</html>

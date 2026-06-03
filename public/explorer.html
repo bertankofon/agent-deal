@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Testnet 8004 Explorer — Agent Deal</title>
+    <link rel="icon" href="/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg:#0a0b0f; --bg-2:#0e1015; --surface:#14161d; --surface-2:#1a1d26;
+        --border:rgba(255,255,255,.08); --border-2:rgba(255,255,255,.14);
+        --text:#e8eaf0; --muted:#8b909e; --faint:#5b606e; --accent:#6d6afe;
+        --accent-soft:rgba(109,106,254,.14); --gold:#f5c451; --ok:#34d399; --bad:#f87171;
+      }
+      * { box-sizing:border-box; }
+      body { margin:0; font-family:"Inter",system-ui,sans-serif; color:var(--text); line-height:1.5;
+        background: radial-gradient(900px 500px at 80% -10%, rgba(109,106,254,.10), transparent 60%), var(--bg); min-height:100vh; }
+      .mono { font-family:"JetBrains Mono",ui-monospace,monospace; }
+      .wrap { max-width:1040px; margin:0 auto; padding:28px 22px 90px; }
+      a { color:#aab0ff; text-decoration:none; } a:hover { text-decoration:underline; }
+      header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+      .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; }
+      .mark { width:27px; height:27px; border-radius:8px; overflow:hidden; background:#fff; display:grid; place-items:center; }
+      .mark img { width:100%; transform:scale(1.85); }
+      .back { font-size:13px; color:var(--muted); }
+      h1 { font-size:26px; font-weight:700; letter-spacing:-.02em; margin:18px 0 6px; }
+      .sub { color:var(--muted); font-size:14px; max-width:640px; margin:0 0 14px; }
+      .meta { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--muted); margin-bottom:22px; }
+      .pill { background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:5px 11px; }
+      .pill b { color:var(--text); }
+      .tools { display:flex; gap:10px; align-items:center; margin-bottom:18px; }
+      button { font-family:inherit; font-size:13px; font-weight:600; border-radius:9px; cursor:pointer;
+        border:1px solid var(--border-2); background:var(--surface-2); color:var(--text); padding:8px 14px; }
+      button:hover { border-color:var(--accent); } button:disabled { opacity:.5; cursor:not-allowed; }
+      .toggle { display:inline-flex; border:1px solid var(--border-2); border-radius:9px; overflow:hidden; }
+      .toggle button { border:0; border-radius:0; background:transparent; }
+      .toggle button.on { background:var(--accent-soft); color:#aab0ff; }
+      .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+      .card { background:linear-gradient(180deg,var(--surface),var(--bg-2)); border:1px solid var(--border);
+        border-radius:14px; padding:15px; }
+      .top { display:flex; align-items:center; gap:11px; }
+      .av { width:40px; height:40px; border-radius:11px; display:grid; place-items:center; font-weight:700;
+        color:#fff; flex:none; background:linear-gradient(135deg,#5b6cff,#8b7bff); }
+      .nm { font-weight:600; font-size:15px; }
+      .id { font-size:12px; color:var(--faint); }
+      .rep { margin-left:auto; text-align:right; font-size:12px; }
+      .stars { color:var(--gold); font-size:13px; } .stars.none { color:var(--faint); }
+      .rep .n { color:var(--muted); font-size:11px; }
+      .desc { font-size:13px; color:var(--muted); margin:11px 0; min-height:18px; }
+      .kv { font-size:12px; display:flex; gap:8px; padding:3px 0; }
+      .kv .k { color:var(--faint); width:64px; flex:none; }
+      .kv .v { color:var(--text); }
+      .svc { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
+      .svc span { font-size:11px; font-weight:600; padding:2px 8px; border-radius:6px; background:var(--accent-soft); color:#aab0ff; }
+      .rate-row { margin-top:11px; padding-top:11px; border-top:1px solid var(--border); display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+      .rate-lbl { font-size:12px; color:var(--muted); } .rate-lbl.ok { color:var(--ok); }
+      .rate-lbl.ok a { color:var(--accent); }
+      .rstars { font-size:17px; cursor:pointer; letter-spacing:2px; } .rstars .rs { color:#2a2f3a; } .rstars .rs.on { color:var(--gold); }
+      .rate-go { font-family:inherit; font-size:12px; font-weight:600; border:0; border-radius:8px; padding:6px 12px; cursor:pointer; color:#fff; background:var(--accent); }
+      .rate-go:disabled { opacity:.5; cursor:not-allowed; }
+      #registerBtn { font-family:inherit; font-size:13px; font-weight:600; border:1px solid var(--border-2); background:var(--surface-2); color:var(--text); border-radius:9px; padding:8px 14px; cursor:pointer; margin-left:auto; }
+      #registerBtn:hover { border-color:var(--accent); }
+      .empty, .loading { color:var(--muted); font-size:14px; padding:40px 0; text-align:center; }
+      .spin { display:inline-block; width:14px; height:14px; border:2px solid var(--border-2); border-top-color:var(--accent);
+        border-radius:50%; animation:spin .8s linear infinite; vertical-align:-2px; margin-right:8px; }
+      @keyframes spin { to { transform:rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand"><span class="mark"><img src="/logo.png" alt="" /></span> Agent Deal</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <a class="back" href="/">← back to app</a>
+          <button id="walletBtn" style="font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);color:var(--text);padding:7px 14px">Connect wallet</button>
+        </div>
+      </header>
+
+      <h1>Testnet 8004 Explorer</h1>
+      <p class="sub">stellar8004.com only indexes mainnet. This page reads the trionlabs ERC-8004
+        Identity &amp; Reputation registries directly from <b>Stellar testnet</b> over Soroban RPC.</p>
+
+      <div class="meta" id="meta"></div>
+      <div class="tools">
+        <button id="reindex">↻ Reindex</button>
+        <span class="toggle">
+          <button id="tabAll" class="on">All agents</button>
+          <button id="tabMine">My agents</button>
+        </span>
+        <button id="registerBtn">＋ Register an agent</button>
+      </div>
+
+      <div id="list"><div class="loading"><span class="spin"></span>Indexing testnet…</div></div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let cfg = {};
+      let mine = false;
+      let wallet = null;
+      const NET = "Test SDF Network ; September 2015";
+      const short2 = (a) => (a ? a.slice(0,4)+"…"+a.slice(-4) : "—");
+
+      // ---- Freighter + generic 8004 write ----
+      let FR = null;
+      async function loadFR() {
+        if (FR) return FR;
+        const m = await import("https://esm.sh/@stellar/freighter-api@4.1.0");
+        FR = (m && typeof m.isConnected === "function") ? m : (m.default && m.default.isConnected ? m.default : m.default || m);
+        return FR;
+      }
+      async function connectWallet() {
+        let api; try { api = await loadFR(); } catch (e) { alert("Could not load Freighter: " + e); return null; }
+        try {
+          const c = await api.isConnected();
+          if (c && c.isConnected === false) { alert("Freighter not detected. Enable the extension and reload."); return null; }
+          const acc = await api.requestAccess(); if (acc && acc.error) throw new Error(acc.error);
+          let addr = (acc && acc.address) || ""; if (!addr) { const g = await api.getAddress(); addr = g.address || g; }
+          wallet = typeof addr === "string" ? addr : addr.address;
+          $("walletBtn").textContent = short2(wallet);
+          return wallet;
+        } catch (e) { alert("Connect failed: " + (e.message||e)); return null; }
+      }
+      async function sign8004(urlFn) {
+        if (!wallet) { const w = await connectWallet(); if (!w) throw new Error("connect wallet"); }
+        const buildUrl = typeof urlFn === "function" ? urlFn() : urlFn;
+        const api = await loadFR();
+        const b = await (await fetch(buildUrl)).json(); if (b.error) throw new Error(b.error);
+        const signed = await api.signTransaction(b.xdr, { networkPassphrase: NET, address: wallet });
+        if (signed && signed.error) throw new Error(signed.error);
+        const signedXdr = typeof signed === "string" ? signed : signed.signedTxXdr;
+        const res = await (await fetch("/api/tx/submit", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ signedXdr })})).json();
+        if (res.error) throw new Error(res.error);
+        return res;
+      }
+      $("walletBtn").addEventListener("click", connectWallet);
+
+      const acct = (a) => `https://stellar.expert/explorer/testnet/account/${a}`;
+      const ctr = (a) => `https://stellar.expert/explorer/testnet/contract/${a}`;
+      const short = (a) => (a ? a.slice(0, 5) + "…" + a.slice(-4) : "—");
+      const initials = (n) => (n || "A").replace(/[^a-zA-Z0-9 ]/g, "").split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "A";
+
+      function repHtml(a) {
+        if (a.avgScore == null || a.feedbackCount === 0)
+          return `<div class="stars none">no feedback</div>`;
+        const s = a.avgScore / 20; // 0–100 → 0–5
+        const full = Math.round(s);
+        return `<div class="stars">${"★".repeat(full)}${"☆".repeat(Math.max(0, 5 - full))} ${s.toFixed(1)}</div>
+          <div class="n">${a.avgScore.toFixed(0)}/100 · ${a.feedbackCount} feedback${a.feedbackCount === 1 ? "" : "s"}</div>`;
+      }
+
+      function card(a) {
+        const svc = (a.services || []).map((s) => `<span>${s.name}</span>`).join("") || `<span style="background:transparent;color:var(--faint);padding:0">no services</span>`;
+        return `<div class="card">
+          <div class="top">
+            <div class="av">${initials(a.name)}</div>
+            <div><div class="nm">${a.name}</div><div class="id">agent #${a.id}</div></div>
+            <div class="rep">${repHtml(a)}</div>
+          </div>
+          <div class="desc">${a.description ? a.description : ""}</div>
+          <div class="kv"><span class="k">Owner</span><span class="v mono"><a href="${acct(a.owner)}" target="_blank">${short(a.owner)}</a></span></div>
+          <div class="kv"><span class="k">Wallet</span><span class="v mono">${a.wallet ? `<a href="${acct(a.wallet)}" target="_blank">${short(a.wallet)}</a>` : "—"}</span></div>
+          <div class="svc">${svc}</div>
+          <div class="rate-row" data-agent="${a.id}" data-name="${encodeURIComponent(a.name)}">
+            <span class="rate-lbl">Rate on-chain:</span>
+            <span class="rstars">${[1,2,3,4,5].map(n=>`<span class="rs" data-n="${n}">★</span>`).join("")}</span>
+            <button class="rate-go" disabled>Submit</button>
+          </div>
+        </div>`;
+      }
+
+      function wireRatings() {
+        document.querySelectorAll(".rate-row").forEach((row) => {
+          const id = row.dataset.agent; const name = decodeURIComponent(row.dataset.name);
+          const stars = row.querySelector(".rstars"); const go = row.querySelector(".rate-go");
+          let chosen = 0;
+          const paint = (n) => [...stars.children].forEach((s,i)=> s.classList.toggle("on", i < n));
+          [...stars.children].forEach((s) => {
+            s.addEventListener("mouseenter", () => paint(+s.dataset.n));
+            s.addEventListener("click", () => { chosen = +s.dataset.n; paint(chosen); go.disabled = false; });
+          });
+          stars.addEventListener("mouseleave", () => paint(chosen));
+          go.addEventListener("click", async () => {
+            if (!chosen) return; go.disabled = true; go.textContent = "Signing…";
+            try {
+              const res = await sign8004(() => `/api/feedback/${id}/build?from=${wallet}&score=${chosen}`);
+              row.innerHTML = `<span class="rate-lbl ok">★ ${chosen}/5 written to agent #${id} ✓ <a href="${res.explorerUrl}" target="_blank">tx ↗</a></span>`;
+            } catch (e) { go.disabled = false; go.textContent = "Submit"; alert("Rating failed: " + (e.message||e)); }
+          });
+        });
+      }
+
+      async function load() {
+        $("list").innerHTML = `<div class="loading"><span class="spin"></span>Indexing testnet…</div>`;
+        $("reindex").disabled = true;
+        try {
+          const q = mine && wallet ? `?owner=${wallet}&limit=40` : "?limit=40";
+          const d = await (await fetch("/api/registry" + q)).json();
+          if (d.error) throw new Error(d.error);
+          $("meta").innerHTML =
+            `<span class="pill">network <b>testnet</b></span>
+             <span class="pill"><b>${d.totalAgents}</b> agents registered</span>
+             <span class="pill">showing <b>${d.agents.length}</b></span>
+             <span class="pill">identity <a href="${ctr(d.identityRegistry)}" target="_blank" class="mono">${short(d.identityRegistry)}</a></span>
+             <span class="pill">reputation <a href="${ctr(d.reputationRegistry)}" target="_blank" class="mono">${short(d.reputationRegistry)}</a></span>`;
+          $("list").innerHTML = d.agents.length
+            ? `<div class="grid">${d.agents.map(card).join("")}</div>`
+            : `<div class="empty">No agents found.</div>`;
+          wireRatings();
+        } catch (e) {
+          $("list").innerHTML = `<div class="empty">Failed to index: ${e}</div>`;
+        } finally {
+          $("reindex").disabled = false;
+        }
+      }
+
+      $("reindex").addEventListener("click", load);
+      $("tabAll").addEventListener("click", () => { mine = false; $("tabAll").classList.add("on"); $("tabMine").classList.remove("on"); load(); });
+      $("tabMine").addEventListener("click", async () => {
+        if (!wallet) { const w = await connectWallet(); if (!w) return; }
+        mine = true; $("tabMine").classList.add("on"); $("tabAll").classList.remove("on"); load();
+      });
+      $("registerBtn").addEventListener("click", async () => {
+        if (!wallet) { const w = await connectWallet(); if (!w) return; }
+        const name = prompt("Agent name:"); if (!name) return;
+        const description = prompt("Short description:") || "";
+        try {
+          const res = await sign8004(() => `/api/identity/build?from=${wallet}&name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`);
+          alert("Registered on 8004! tx: " + res.hash);
+          load();
+        } catch (e) { alert("Register failed: " + (e.message || e)); }
+      });
+
+      (async () => {
+        try { cfg = await (await fetch("/api/config")).json(); } catch {}
+        load();
+      })();
+    </script>
+  </body>
+</html>
