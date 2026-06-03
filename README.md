@@ -32,7 +32,7 @@ A *Revenue-max* seller deterministically lands higher than a *Fast* seller; a *b
 
 ## Live demo
 
-**https://agent-deal.vercel.app** (after Vercel deploy — see below)
+**https://agent-deal.vercel.app** — must show the Agent Deal UI (not the Next.js “edit app/page.tsx” page). If you see Next.js, follow **[docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md)** to reconnect the GitHub repo.
 
 ## Quick start
 
@@ -45,14 +45,12 @@ npm run dev          # http://localhost:8787
 
 ## Deploy (Vercel)
 
-1. Import [github.com/bertankofon/agent-deal](https://github.com/bertankofon/agent-deal) in [Vercel](https://vercel.com/new) (root directory: `.`, framework: Other).
-2. Project name: `agent-deal` → **agent-deal.vercel.app**
-3. Add **Environment Variables** (Production) from your `.env` if you want real settlement / LLM:
-   - `STELLAR_SECRET_KEY`, `STELLAR_PAYER_SECRET`, `STELLAR_RECIPIENT`, `MPP_SECRET_KEY`, `SELLER_STELLAR_AGENT_ID`, `STELLAR_NETWORK`, `FAL_KEY` (optional)
-   - `APP_BASE_URL` is preset in `vercel.json` to `https://agent-deal.vercel.app`
-4. Deploy. Or CLI: `vercel login && vercel --prod`
+Full checklist (Turkish): **[docs/DEPLOY-VERCEL.md](docs/DEPLOY-VERCEL.md)**
 
-> **Note:** Sessions are in-memory. On serverless, negotiate → settle works best under steady traffic on one instance; demo UI + negotiation still work without keys.
+1. Import [github.com/bertankofon/agent-deal](https://github.com/bertankofon/agent-deal) — **not** a blank Next.js template.
+2. Framework: **Other** · Root: `.` · Project name: `agent-deal`
+3. After deploy, verify `/api/health` returns JSON and `/` shows Agent Deal (blue UI).
+4. Optional env vars: see DEPLOY-VERCEL.md.
 
 Works out of the box in **demo mode** (no keys): real negotiation + reputation gate, simulated settlement. Add testnet keys for real USDC.
 

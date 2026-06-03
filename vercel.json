@@ -1,15 +1,6 @@
 {
-  "version": 2,
-  "installCommand": "npm install",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm run check",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
-  "functions": {
-    "api/index.ts": {
-      "maxDuration": 60,
-      "memory": 1024,
-      "includeFiles": "{public,seed}/**"
-    }
-  },
   "env": {
     "APP_BASE_URL": "https://agent-deal.vercel.app"
   }
