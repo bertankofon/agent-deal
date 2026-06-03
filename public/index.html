@@ -418,9 +418,8 @@
           const res = document.createElement("div"); res.className = "sresult";
           res.innerHTML = `Deal at <span class="mono">${fmt(o.finalPrice)}</span> <span style="color:var(--muted);font-weight:500">(list ${fmt(o.listPrice)})</span>`;
           actions.appendChild(res);
-          const pay = document.createElement("button"); pay.className = "snego"; pay.textContent = "Choose & pay";
-          pay.addEventListener("click", () => payDeal(o, sku, cardEl));
-          actions.appendChild(pay);
+          showDealCards([o], sku,
+            `Deal closed with <b>${esc(o.seller.name)}</b> at <b class="mono">${fmt(o.finalPrice)}</b>. Pick below to settle from your wallet.`);
         } else {
           cardEl.classList.add("done-no");
           const res = document.createElement("div"); res.className = "sresult no";
@@ -462,19 +461,34 @@
           chat.appendChild(row); await sleep(500); scroll({ behavior: "instant" });
         }
 
-        const agreed = r.offers.filter(o => o.agreed);
-        if (!agreed.length) { botMsg("No seller met the terms this time — try another item."); return; }
+        showDealCards(r.offers.filter((o) => o.agreed), sku,
+          `Here are your best options across ${r.offers.filter((o) => o.agreed).length} sellers. Pick the one you like — I'll settle it from your wallet.`);
+      }
 
-        const cheapest = agreed.reduce((a,b)=> b.finalPrice<a.finalPrice?b:a);
-        const trusted = agreed.reduce((a,b)=> b.sellerRep>a.sellerRep?b:a);
-        const value = agreed.reduce((a,b)=> (b.finalPrice/b.listPrice-b.sellerRep/5*0.15)<(a.finalPrice/a.listPrice-a.sellerRep/5*0.15)?b:a);
-        agreed.forEach(o => { o.tags = []; if(o===cheapest)o.tags.push(["cheap","Cheapest"]); if(o===trusted)o.tags.push(["trust","Most trusted"]); if(o===value)o.tags.push(["value","Best value"]); });
-        agreed.sort((a,b)=> (a.finalPrice/a.listPrice-a.sellerRep/5*0.15)-(b.finalPrice/b.listPrice-b.sellerRep/5*0.15));
-
-        botMsg(`Here are your best options across ${agreed.length} sellers. Pick the one you like — I'll settle it from your wallet.`, true);
-        const wrap = document.createElement("div"); wrap.className="cardblock";
-        const deals = document.createElement("div"); deals.className="deals";
-        agreed.forEach((o,i) => deals.appendChild(dealCard(o, sku, i===0)));
+      function showDealCards(offers, sku, introHtml) {
+        const agreed = offers.filter((o) => o.agreed);
+        if (!agreed.length) {
+          botMsg("No seller met the terms this time — try another item.");
+          return;
+        }
+        if (agreed.length > 1) {
+          const cheapest = agreed.reduce((a, b) => (b.finalPrice < a.finalPrice ? b : a));
+          const trusted = agreed.reduce((a, b) => (b.sellerRep > a.sellerRep ? b : a));
+          const value = agreed.reduce((a, b) =>
+            (b.finalPrice / b.listPrice - b.sellerRep / 5 * 0.15) < (a.finalPrice / a.listPrice - a.sellerRep / 5 * 0.15) ? b : a);
+          agreed.forEach((o) => {
+            o.tags = [];
+            if (o === cheapest) o.tags.push(["cheap", "Cheapest"]);
+            if (o === trusted) o.tags.push(["trust", "Most trusted"]);
+            if (o === value) o.tags.push(["value", "Best value"]);
+          });
+          agreed.sort((a, b) =>
+            (a.finalPrice / a.listPrice - a.sellerRep / 5 * 0.15) - (b.finalPrice / b.listPrice - b.sellerRep / 5 * 0.15));
+        }
+        botMsg(introHtml, true);
+        const wrap = document.createElement("div"); wrap.className = "cardblock";
+        const deals = document.createElement("div"); deals.className = "deals";
+        agreed.forEach((o, i) => deals.appendChild(dealCard(o, sku, i === 0)));
         wrap.appendChild(deals); chat.appendChild(wrap); scroll();
       }
 
