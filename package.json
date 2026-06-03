@@ -8,7 +8,8 @@
     "start": "tsx src/index.ts",
     "register:seller": "tsx scripts/register-seller.ts",
     "check": "tsc --noEmit",
-    "doctor": "tsx scripts/doctor.ts"
+    "doctor": "tsx scripts/doctor.ts",
+    "vercel-build": "npm run check"
   },
   "keywords": [],
   "author": "",

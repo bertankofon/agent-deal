@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "installCommand": "npm install",
+  "buildCommand": "npm run check",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
+  "env": {
+    "APP_BASE_URL": "https://agent-deal.vercel.app"
+  }
+}
