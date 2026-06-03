@@ -29,8 +29,8 @@ export async function chatReply(message: string, history: { role: string; conten
 
   if (matched) {
     const reply = await phrase(
-      `The shopper wants "${matched.sku}". ${matched.sellers} sellers carry it from $${matched.from}. Tell them you'll negotiate with the sellers and find the best deal.`,
-      `Great pick! Let me negotiate "${matched.sku}" with all ${matched.sellers} sellers and bring you the best options.`,
+      `The shopper wants "${matched.sku}". ${matched.sellers} sellers carry it from $${matched.from}. Tell them you'll show seller cards with list prices and reputation — they choose who to negotiate with.`,
+      `Nice — ${matched.sellers} sellers carry "${matched.sku}" from ${matched.from < 1 ? "$" + matched.from.toFixed(3) : "$" + matched.from.toFixed(2)}. Here are your options; pick a seller and start negotiation when you're ready.`,
       history,
       message
     );

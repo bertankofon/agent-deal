@@ -87,6 +87,37 @@
       .dbtn:disabled { opacity:.55; cursor:not-allowed; }
       .dbtn.ghost { background:#f1f4fb; color:var(--ink); }
 
+      .seller-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(272px,1fr)); gap:12px; margin-top:4px; }
+      .scard { background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 15px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:10px; }
+      .scard.ineligible { opacity:.72; background:#fafbfd; }
+      .scard.negotiating { border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-soft), var(--shadow); }
+      .scard.done-ok { border-color:#b8e8d0; }
+      .scard.done-no { border-color:#f0d4d4; }
+      .shead { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+      .sname { font-weight:800; font-size:15px; line-height:1.2; }
+      .sname .st { color:var(--gold); font-size:12px; font-weight:600; margin-left:4px; }
+      .spersona { font-size:11.5px; font-weight:700; color:var(--brand); background:var(--brand-soft); padding:3px 9px; border-radius:999px; white-space:nowrap; }
+      .stagline { font-size:12.5px; color:var(--muted); line-height:1.4; margin-top:-4px; }
+      .smeta { display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12.5px; }
+      .smeta .cell { background:#f7f9fe; border-radius:10px; padding:8px 10px; }
+      .smeta .k { color:var(--muted); font-size:11px; display:block; margin-bottom:2px; }
+      .smeta .v { font-weight:700; }
+      .slinks { display:flex; flex-wrap:wrap; gap:8px; font-size:12px; }
+      .slinks a { color:var(--brand); text-decoration:none; font-weight:600; }
+      .slinks a:hover { text-decoration:underline; }
+      .swarn { font-size:12px; color:#b45309; background:#fff8ed; border-radius:8px; padding:7px 9px; }
+      .sresult { font-size:13px; font-weight:600; padding:8px 10px; border-radius:10px; background:#f0f6ff; color:#1f4bd8; }
+      .sresult.no { background:#fff5f5; color:#a33030; }
+      .sactions { display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; }
+      .snego { flex:1; min-width:140px; border:0; border-radius:10px; padding:10px 12px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
+        color:#fff; background:linear-gradient(135deg,var(--brand),var(--brand-2)); }
+      .snego:disabled { opacity:.55; cursor:not-allowed; }
+      .snego.ghost { background:#f1f4fb; color:var(--ink); flex:none; }
+      .seller-foot { margin-top:12px; display:flex; justify-content:flex-end; }
+      .seller-foot button { border:0; border-radius:10px; padding:10px 16px; font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;
+        background:#fff; color:var(--brand); border:1px solid var(--brand-soft); }
+      .seller-foot button:hover { background:var(--brand-soft); }
+
       .statusrow { font-size:13px; color:var(--muted); padding:3px 0; display:flex; gap:8px; }
       .statusrow .ok{ color:var(--ok); font-weight:600; } .statusrow .no{ color:#c0392b; }
 
@@ -167,6 +198,18 @@
       let history = [];
       let wallet = null;
 
+      async function apiPost(path, body) {
+        const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        const text = await res.text();
+        let data;
+        try { data = text ? JSON.parse(text) : {}; } catch {
+          if (res.status === 404) throw new Error("API route missing — stop and restart: npm run dev");
+          throw new Error("Server returned non-JSON (is the dev server running?)");
+        }
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+      }
+
       // ---------- Freighter ----------
       let FR = null;
       async function loadFR() {
@@ -201,7 +244,7 @@
       function userMsg(text) {
         const m = document.createElement("div"); m.className = "msg user";
         m.innerHTML = `<div class="ava you">Y</div><div class="bub">${esc(text)}</div>`;
-        chat.appendChild(m); scroll();
+        chat.appendChild(m); scroll({ force: true });
       }
       function block(node) { const b = document.createElement("div"); b.className="cardblock"; b.appendChild(node); chat.appendChild(b); scroll(); return b; }
       function typing() {
@@ -209,7 +252,16 @@
         m.innerHTML = `<div class="ava bot">◆</div><div class="bub"><div class="typing"><span></span><span></span><span></span></div></div>`;
         chat.appendChild(m); scroll(); return m;
       }
-      const scroll = () => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      /** Only follow new content if the user is already near the bottom (or force). */
+      function isNearBottom(px = 160) {
+        return document.documentElement.scrollHeight - window.scrollY - window.innerHeight < px;
+      }
+      function scroll(opts = {}) {
+        const { force = false, behavior = "smooth" } = opts;
+        if (force || isNearBottom()) {
+          window.scrollTo({ top: document.documentElement.scrollHeight, behavior });
+        }
+      }
       const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
 
       // ---------- catalog cards ----------
@@ -220,8 +272,8 @@
           c.innerHTML = `<div class="pimg">${p.image || "📦"}</div>
             <div class="pname">${p.sku}</div><div class="pmeta">${p.sellers} sellers</div>
             <div class="pprice">from ${fmt(p.from)}</div>
-            <button class="pbtn">Find best deal</button>`;
-          c.querySelector(".pbtn").addEventListener("click", () => startShop(p.sku));
+            <button class="pbtn">View sellers</button>`;
+          c.querySelector(".pbtn").addEventListener("click", () => showSellerList(p.sku));
           row.appendChild(c);
         }
         return row;
@@ -237,7 +289,7 @@
           t.remove();
           botMsg(esc(r.reply), true); history.push({ role: "assistant", content: r.reply });
           if (r.products && r.products.length) block(productCards(r.products));
-          if (r.action === "product" && r.sku) setTimeout(() => startShop(r.sku), 400);
+          if (r.action === "product" && r.sku) setTimeout(() => showSellerList(r.sku), 400);
         } catch (e) { t.remove(); botMsg("Sorry, something went wrong: " + e); }
       }
       $("send").addEventListener("click", () => { const v = $("input").value; $("input").value=""; send(v); });
@@ -253,11 +305,11 @@
           const m = o.session.transcript[i];
           const t = document.createElement("div"); t.className = `nbub ${m.sender} t`;
           t.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
-          wrap.appendChild(t); scroll(); await sleep(620); t.remove();
+          wrap.appendChild(t); scroll({ behavior: "instant" }); await sleep(620); t.remove();
           const b = document.createElement("div");
           b.className = `nbub ${m.sender}` + (m.accept ? " accept" : m.reject ? " reject" : "");
           b.innerHTML = `${esc(m.message)}<div class="pp mono">${fmt(m.proposedPrice)}</div>`;
-          wrap.appendChild(b); scroll(); await sleep(380);
+          wrap.appendChild(b); scroll({ behavior: "instant" }); await sleep(380);
         }
       }
 
@@ -276,22 +328,129 @@
         return res;
       }
 
-      // ---------- shop = negotiate + tagged deals ----------
-      async function startShop(sku) {
-        userMsg(`Find me the best deal on ${sku}`);
+      const BUYER_ID = "atlas";
+      const personaLabel = (p) => ({ fast:"Fast", revenue:"Revenue-max", balanced:"Balanced" }[p] || p);
+
+      // ---------- seller preview → pick → negotiate ----------
+      async function showSellerList(sku, opts = {}) {
+        if (!opts.skipUserMsg) userMsg(`Show me sellers for ${sku}`);
+        const t = typing(); await sleep(450); t.remove();
+        let preview;
+        try {
+          preview = await apiPost("/api/shop/preview", { buyerAgentId: BUYER_ID, sku });
+        } catch (e) { botMsg("Could not load sellers: " + (e.message || e)); return; }
+        const eligible = preview.sellers.filter((s) => s.eligible).length;
+        botMsg(
+          `<b>${esc(sku)}</b> — ${preview.sellers.length} seller${preview.sellers.length === 1 ? "" : "s"} listed. ` +
+          `Your buyer agent (<b>${esc(preview.buyer.name)}</b>) trusts sellers rated <b>${preview.threshold.toFixed(1)}+</b> — ` +
+          `<b>${eligible}</b> eligible. Pick one and hit <b>Start negotiation</b>.`,
+          true
+        );
+        block(sellerPreviewBlock(preview, sku));
+      }
+
+      function sellerPreviewBlock(preview, sku) {
+        const wrap = document.createElement("div");
+        const grid = document.createElement("div"); grid.className = "seller-grid";
+        for (const row of preview.sellers) grid.appendChild(sellerCard(row, sku));
+        wrap.appendChild(grid);
+        const eligible = preview.sellers.filter((s) => s.eligible);
+        if (eligible.length > 1) {
+          const foot = document.createElement("div"); foot.className = "seller-foot";
+          const allBtn = document.createElement("button");
+          allBtn.textContent = `Negotiate with all ${eligible.length} eligible sellers`;
+          allBtn.addEventListener("click", () => runAllNegotiations(sku, { skipIntro: true }));
+          foot.appendChild(allBtn); wrap.appendChild(foot);
+        }
+        return wrap;
+      }
+
+      function sellerCard(row, sku) {
+        const c = document.createElement("div");
+        c.className = "scard" + (row.eligible ? "" : " ineligible");
+        c.dataset.sellerId = row.seller.id;
+        const links = [];
+        if (row.links.agentRegistry) links.push(`<a href="${row.links.agentRegistry}" target="_blank">8004 agent #${row.seller.stellarAgentId} ↗</a>`);
+        else if (row.seller.stellarAgentId) links.push(`<span class="mono" style="color:var(--faint)">agent #${row.seller.stellarAgentId}</span>`);
+        links.push(`<a href="${row.links.explorer}" target="_blank">Registry explorer ↗</a>`);
+        if (row.links.wallet) links.push(`<a href="${row.links.wallet}" target="_blank">Wallet ${short(row.seller.wallet)} ↗</a>`);
+        c.innerHTML = `
+          <div class="shead">
+            <div><div class="sname">${esc(row.seller.name)}<span class="st">${stars(row.seller.repScore)} ${row.seller.repScore.toFixed(1)}</span></div></div>
+            <span class="spersona">${personaLabel(row.seller.persona)}</span>
+          </div>
+          <div class="stagline">${esc(row.seller.tagline)} · ${row.seller.repDeals} deals</div>
+          <div class="smeta">
+            <div class="cell"><span class="k">List price</span><span class="v mono">${fmt(row.listPrice)}</span></div>
+            <div class="cell"><span class="k">Floor (policy)</span><span class="v mono">${fmt(row.floorPrice)}</span></div>
+          </div>
+          <div class="slinks">${links.join("")}</div>
+          ${row.skipReason ? `<div class="swarn">${esc(row.skipReason)}</div>` : ""}
+          <div class="sactions">
+            <button class="snego" type="button" ${row.eligible ? "" : "disabled"}>Start negotiation</button>
+          </div>`;
+        const btn = c.querySelector(".snego");
+        if (row.eligible) btn.addEventListener("click", () => negotiateOneSeller(sku, row, c));
+        return c;
+      }
+
+      async function negotiateOneSeller(sku, row, cardEl) {
+        const btn = cardEl.querySelector(".snego");
+        if (btn.disabled && cardEl.dataset.done) return;
+        btn.disabled = true; btn.textContent = "Negotiating…";
+        cardEl.classList.add("negotiating");
+        let data;
+        try {
+          data = await apiPost("/api/shop/negotiate", { buyerAgentId: BUYER_ID, sku, sellerId: row.seller.id });
+        } catch (e) {
+          btn.disabled = false; btn.textContent = "Start negotiation";
+          cardEl.classList.remove("negotiating");
+          botMsg("Negotiation failed: " + (e.message || e)); return;
+        }
+        const o = data.offer;
+        cardEl.classList.remove("negotiating");
+        await playMini(o);
+        cardEl.dataset.done = "1";
+        const actions = cardEl.querySelector(".sactions");
+        actions.innerHTML = "";
+        if (o.agreed) {
+          cardEl.classList.add("done-ok");
+          const res = document.createElement("div"); res.className = "sresult";
+          res.innerHTML = `Deal at <span class="mono">${fmt(o.finalPrice)}</span> <span style="color:var(--muted);font-weight:500">(list ${fmt(o.listPrice)})</span>`;
+          actions.appendChild(res);
+          const pay = document.createElement("button"); pay.className = "snego"; pay.textContent = "Choose & pay";
+          pay.addEventListener("click", () => payDeal(o, sku, cardEl));
+          actions.appendChild(pay);
+        } else {
+          cardEl.classList.add("done-no");
+          const res = document.createElement("div"); res.className = "sresult no";
+          res.textContent = "No deal — terms did not meet your agent's budget.";
+          actions.appendChild(res);
+          const retry = document.createElement("button"); retry.className = "snego ghost"; retry.textContent = "Retry";
+          retry.addEventListener("click", () => {
+            cardEl.classList.remove("done-ok", "done-no");
+            actions.innerHTML = `<button class="snego" type="button">Start negotiation</button>`;
+            actions.querySelector(".snego").addEventListener("click", () => negotiateOneSeller(sku, row, cardEl));
+          });
+          actions.appendChild(retry);
+        }
+      }
+
+      async function runAllNegotiations(sku, opts = {}) {
+        if (!opts.skipIntro) userMsg(`Negotiate with all sellers for ${sku}`);
         const t = typing(); await sleep(500); t.remove();
-        botMsg(`On it — scanning sellers and negotiating for <b>${esc(sku)}</b>…`, true);
+        if (!opts.skipIntro) botMsg(`Negotiating with every eligible seller for <b>${esc(sku)}</b>…`, true);
         const statusWrap = document.createElement("div"); statusWrap.className = "cardblock";
         chat.appendChild(statusWrap); scroll();
         let r;
         try {
-          r = await (await fetch("/api/shop", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ buyerAgentId:"atlas", sku })})).json();
-        } catch (e) { botMsg("Negotiation failed: " + e); return; }
+          r = await apiPost("/api/shop/negotiate", { buyerAgentId: BUYER_ID, sku });
+        } catch (e) { botMsg("Negotiation failed: " + (e.message || e)); return; }
 
         for (const s of r.skipped) {
           const row = document.createElement("div"); row.className="statusrow";
           row.innerHTML = `<span class="no">✗ ${esc(s.name)}</span> skipped — reputation ${s.rep.toFixed(1)} below your agent's threshold`;
-          statusWrap.appendChild(row); await sleep(600); scroll();
+          statusWrap.appendChild(row); await sleep(600); scroll({ behavior: "instant" });
         }
         // Play each seller's negotiation, visibly and unhurried.
         for (const o of r.offers) {
@@ -300,7 +459,7 @@
           row.innerHTML = o.agreed
             ? `<span class="ok">✓ ${esc(o.seller.name)}</span> closed at <b class="mono">${fmt(o.finalPrice)}</b>`
             : `<span class="no">✗ ${esc(o.seller.name)}</span> walked away`;
-          chat.appendChild(row); await sleep(500); scroll();
+          chat.appendChild(row); await sleep(500); scroll({ behavior: "instant" });
         }
 
         const agreed = r.offers.filter(o => o.agreed);
@@ -336,7 +495,7 @@
 
       // ---------- settle (wallet-only) ----------
       async function payDeal(o, sku, cardEl) {
-        const btn = cardEl.querySelector(".dbtn");
+        const btn = cardEl.querySelector(".dbtn, .sactions .snego:not(.ghost)");
         if (!wallet) { const w = await connectWallet(); if (!w) return; }
         btn.disabled = true; btn.textContent = "Signing…";
         const sid = o.session.id;
@@ -401,7 +560,7 @@
         $("chips").innerHTML = chips.map(c=>`<span class="chip">${c}</span>`).join("");
         [...document.querySelectorAll(".chip")].forEach(el => el.addEventListener("click", () => send(el.textContent)));
         await sleep(300);
-        botMsg("Hey! I'm your autonomous shopping agent. Ask me what's available, or tell me what you need and I'll negotiate it across sellers for you.", true);
+        botMsg("Hey! I'm your autonomous shopping agent. Ask what's available, pick a product, compare sellers, then start negotiation when you're ready.", true);
       }
       boot();
     </script>

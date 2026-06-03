@@ -12,7 +12,7 @@ import {
   saveSession,
   seedDemoCatalog,
 } from "../store/memory.js";
-import { shop } from "../negotiate/shop.js";
+import { negotiateWithSeller, shop, shopPreview } from "../negotiate/shop.js";
 import { chatReply } from "../llm/chat.js";
 import { hasStellarKeys, registerDemoAgent } from "../stellar/trust.js";
 import { buyerServerConfigured } from "../payment/transfer.js";
@@ -59,7 +59,37 @@ apiRouter.post("/chat", async (req, res) => {
   }
 });
 
-/** Autonomous shopping: buyer agent scans + negotiates every seller of a sku. */
+/** List sellers for a sku (no negotiation). */
+apiRouter.post("/shop/preview", (req, res) => {
+  seedDemoCatalog();
+  const { buyerAgentId, sku } = req.body ?? {};
+  if (!buyerAgentId || !sku) return void res.status(400).json({ error: "buyerAgentId and sku required" });
+  const buyer = getAgent(String(buyerAgentId));
+  if (!buyer || buyer.role !== "buyer") return void res.status(404).json({ error: "buyer agent not found" });
+  res.json(shopPreview(buyer, String(sku)));
+});
+
+/** Negotiate with one seller, or all eligible sellers when sellerId is omitted. */
+apiRouter.post("/shop/negotiate", (req, res) => {
+  seedDemoCatalog();
+  const { buyerAgentId, sku, sellerId } = req.body ?? {};
+  if (!buyerAgentId || !sku) return void res.status(400).json({ error: "buyerAgentId and sku required" });
+  const buyer = getAgent(String(buyerAgentId));
+  if (!buyer || buyer.role !== "buyer") return void res.status(404).json({ error: "buyer agent not found" });
+
+  if (sellerId) {
+    const out = negotiateWithSeller(buyer, String(sku), String(sellerId));
+    if ("error" in out) return void res.status(400).json({ error: out.error });
+    saveSession(out.session);
+    return void res.json({ sku, offer: out });
+  }
+
+  const result = shop(buyer, String(sku));
+  for (const o of result.offers) saveSession(o.session);
+  res.json(result);
+});
+
+/** @deprecated Use /shop/preview + /shop/negotiate — negotiates all eligible sellers at once. */
 apiRouter.post("/shop", (req, res) => {
   seedDemoCatalog();
   const { buyerAgentId, sku } = req.body ?? {};
